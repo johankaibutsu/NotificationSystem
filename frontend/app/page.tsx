@@ -13,7 +13,7 @@ export default function NotificationDashboard() {
   const fireTrigger = async (id: number) => {
     setLoading(id);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/triggers/${id}/fire/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API}/triggers/${id}/fire/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
