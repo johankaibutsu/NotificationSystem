@@ -1,73 +1,103 @@
 "use client"
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react'
 
-export default function NotificationDashboard() {
-  const [loading, setLoading] = useState<number | null>(null);
+// 1. Define what a Template looks like
+interface NotificationTemplate {
+  id: number;
+  channel: string;
+  body: string;
+  subject?: string;
+  is_active: boolean;
+}
 
-  // ONLY Login and Logout triggers
-  const triggers = [
-    { id: 1, name: 'Login Event', slug: 'login', color: 'border-green-500' },
-    { id: 2, name: 'Logout Event', slug: 'logout', color: 'border-red-500' },
-  ];
+// 2. Define what a Trigger looks like
+interface Trigger {
+  id: number;
+  name: string;
+  slug: string;
+  templates: NotificationTemplate[];
+}
 
-  const fireTrigger = async (id: number) => {
-    setLoading(id);
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API}/triggers/${id}/fire/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (response.ok) alert("Success: Notifications Sent!");
-      else alert("Error: Trigger ID not found.");
-    } catch (err) {
-      alert("Backend Connection Failed.");
-    } finally {
-      setLoading(null);
-    }
+export default function AdminPanel() {
+  // 3. Tell TypeScript this state is an array of Triggers (prevents the 'never' error)
+  const [triggers, setTriggers] = useState<Trigger[]>([]);
+  const channels = ['whatsapp', 'email', 'web_push'];
+
+  useEffect(() => {
+    // Use the same env variable you used in the other page
+    const apiBase = process.env.NEXT_PUBLIC_API || "http://127.0.0.1:8000/api";
+    
+    fetch(`${apiBase}/triggers/`)
+      .then(res => res.json())
+      .then((data: Trigger[]) => setTriggers(data))
+      .catch(err => console.error("Failed to load triggers", err));
+  }, []);
+
+  // 4. Added explicit types to parameters to fix the TS7006 errors
+  const updateTemplate = async (triggerId: number, channel: string, data: any) => {
+     console.log("Edit requested for:", triggerId, channel, data);
+     alert("Template editing modal would open here.");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-10 font-sans">
-      <div className="max-w-4xl mx-auto">
+    <div className="p-10 bg-white min-h-screen text-slate-900">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-slate-800 border-b pb-4">
+          Admin Notification Control
+        </h1>
+        
+        <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+          <table className="w-full border-collapse bg-white">
+            <thead className="bg-slate-50 text-slate-500 uppercase text-xs font-semibold tracking-wider">
+              <tr>
+                <th className="border-b p-4 text-left">Trigger (Events)</th>
+                {channels.map(c => (
+                  <th key={c} className="border-b p-4 text-center">{c}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {triggers.map((trigger) => (
+                <tr key={trigger.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="p-4">
+                    <div className="font-bold text-slate-700">{trigger.name}</div>
+                    <div className="text-xs text-slate-400 font-mono">slug: {trigger.slug}</div>
+                  </td>
+                  
+                  {channels.map(channel => {
+                    // 5. Added explicit type 't' to fix the callback error
+                    const template = trigger.templates.find((t: NotificationTemplate) => t.channel === channel);
+                    
+                    return (
+                      <td key={channel} className="p-4 text-center">
+                        <button 
+                          onClick={() => updateTemplate(trigger.id, channel, {})}
+                          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm ${
+                            template?.is_active 
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100" 
+                              : "bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100"
+                          }`}
+                        >
+                          {template?.is_active ? "● Active" : "○ Inactive"}
+                        </button>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-        <header className="mb-10">
-          <h1 className="text-3xl font-bold text-gray-900">Notification System Simulator</h1>
-          <p className="text-gray-500 mt-2">Test multi-channel delivery for Login and Logout events.</p>
-        </header>
-
-        {/* This creates the side-by-side grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {triggers.map((trigger) => (
-            <div key={trigger.id} className={`bg-white p-6 rounded-2xl shadow-sm border-t-4 ${trigger.color}`}>
-              <h2 className="text-xl font-bold mb-4">{trigger.name}</h2>
-
-              <div className="space-y-3 mb-6 text-sm text-gray-600">
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <span>📱 WhatsApp</span>
-                  <span className="text-gray-400">Cloud API</span>
-                </div>
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <span>✉️ Email</span>
-                  <span className="text-gray-400">Resend API</span>
-                </div>
-                <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <span>🌐 Web Push</span>
-                  <span className="text-gray-400">OneSignal</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => fireTrigger(trigger.id)}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
-              >
-                {loading === trigger.id ? "Firing..." : "Fire All Channels"}
-              </button>
-
-              <p className="mt-4 text-xs text-gray-400 text-center uppercase tracking-widest">
-                Slug: {trigger.slug} | ID: {trigger.id}
-              </p>
-            </div>
-          ))}
+        <div className="mt-6 flex gap-4 text-sm text-slate-500">
+           <div className="flex items-center gap-1">
+             <span className="w-3 h-3 rounded-full bg-emerald-500"></span> 
+             Fires automatically on event
+           </div>
+           <div className="flex items-center gap-1">
+             <span className="w-3 h-3 rounded-full bg-slate-300"></span> 
+             Silenced / No template
+           </div>
         </div>
       </div>
     </div>
