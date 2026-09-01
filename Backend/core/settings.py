@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 from pathlib import Path
 import os
-ALLOWED_HOSTS = ['notificationsystem-backend.onrender.com']
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Static files settings for Render
@@ -32,8 +32,11 @@ SECRET_KEY = 'django-insecure-*$xf##c)qw&t^(d_u&&m!)wm@1&py%y)a8ta&rssq7)62xl!j-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [
+    'notificationsystem-backend.onrender.com', 
+    'localhost',                               
+    '127.0.0.1',                               
+]
 
 # Application definition
 
