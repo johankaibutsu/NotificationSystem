@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 from pathlib import Path
 import os
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['notificationsystem-backend.onrender.com']
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Static files settings for Render
